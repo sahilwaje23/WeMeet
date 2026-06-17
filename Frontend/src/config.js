@@ -1,2 +1,2 @@
 
-export const BACKEND_URL = "http://10.246.77.125:8000"
+export const BACKEND_URL = "https://wemeet-backend-b4ct.onrender.com"

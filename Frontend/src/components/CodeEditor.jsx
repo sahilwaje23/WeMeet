@@ -87,7 +87,7 @@ export default function CodeEditor({ onClose, socket, roomId }) {
     try {
       setOutput("Running...");
 
-      const response = await fetch("http://localhost:8000/api/code/run", {
+      const response = await fetch("https://wemeet-backend-b4ct.onrender.com/api/code/run", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

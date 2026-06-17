@@ -7,8 +7,8 @@
 
 
   // importing routes
-  const authRoutes = require("./routes/auth.routes");
-  const roomRoutes=require("./routes/room.routes");
+  // const authRoutes = require("./routes/auth.routes");
+  // const roomRoutes=require("./routes/room.routes");
   const codeRoutes=require("./routes/codeRoutes");
 
   const app = express();
@@ -24,8 +24,8 @@ app.use(
     credentials: true,
   })
 );
-  app.use("/api/rooms", roomRoutes);
-  app.use("/api/auth", authRoutes);
+  // app.use("/api/rooms", roomRoutes);
+  // app.use("/api/auth", authRoutes);
   app.use("/api", uploadRoutes);
   app.use("/api/code",codeRoutes);
 
