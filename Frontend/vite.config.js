@@ -27,6 +27,7 @@ export default defineConfig({
       registerType: "autoUpdate",
 
       manifest: {
+         id: "/",
         name: "WeMeet",
         short_name: "WeMeet",
         description: "Real-time collaboration platform",
