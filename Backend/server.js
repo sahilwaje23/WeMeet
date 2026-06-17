@@ -1,6 +1,6 @@
 require("dotenv").config();
 
-const mongoose = require("mongoose");
+// const mongoose = require("mongoose");
 const app = require("./app");
 
 const http = require("http");
@@ -45,6 +45,6 @@ socketHandler(io);
 //    console.log(`Server running on ${PORT}`);
 // });
 
-server.listen(8000, "0.0.0.0", () => {
-  console.log("Server running");
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on ${PORT}`);
 });
