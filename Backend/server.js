@@ -11,9 +11,9 @@ const socketHandler = require("./socket/socket");
 
 
 
-mongoose.connect(process.env.MONGO_URI)
-.then(() => console.log("MongoDB Connected"))
-.catch((err) => console.log(err));
+// mongoose.connect(process.env.MONGO_URI)
+// .then(() => console.log("MongoDB Connected"))
+// .catch((err) => console.log(err));
 
 const PORT = process.env.PORT || 8000;
 
