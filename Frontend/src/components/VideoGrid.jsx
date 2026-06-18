@@ -8,7 +8,15 @@ export default function VideoGrid({
   cameraOff,
   remoteParticipant,
   username,
-}) {
+}) 
+
+{
+
+  // useEffect(()=>{
+
+    
+
+  // },[])
   return (
     // <div className="grid grid-cols-2 min-h-0 flex-1 gap-6">
     // <div className="grid grid-cols-1 md:grid-cols-2 min-h-0 flex-1 gap-4 md:gap-6 p-2 md:p-0">
@@ -31,6 +39,7 @@ export default function VideoGrid({
   overflow-hidden
 "
       >
+
         <video
           ref={remoteVideoRef}
           autoPlay

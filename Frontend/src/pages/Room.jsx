@@ -14,13 +14,13 @@ import {
 } from "lucide-react";
 import { BACKEND_URL } from "../config";
 
-// moduel imports 
+// moduel imports
 // import { useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import socket from "../socket/socket";
 import { VideoOff } from "lucide-react";
 
-// component imports 
+// component imports
 
 import Sidebar from "../components/Sidebar";
 import Control from "../components/Control";
@@ -96,7 +96,7 @@ export default function Room() {
 
   const remoteParticipant = participants.find((p) => p.id !== socket.id);
 
-  //FOR CODE EDITOR 
+  //FOR CODE EDITOR
 
   const [showCodeEditor, setShowCodeEditor] = useState(false);
 
@@ -151,10 +151,10 @@ export default function Room() {
 
     console.log("Mic:", muted ? "OFF" : "ON");
 
-    // socket.emit("mic-status", {
-    //   roomId,
-    //   muted,
-    // });
+    socket.emit("mic-status", {
+      roomId,
+      muted,
+    });
   };
   // const toggleCamera = () => {
   //   const videoTrack = localStream.current?.getVideoTracks()[0];
@@ -408,30 +408,26 @@ export default function Room() {
 
         setIsMuted(micMuted);
 
-        socket.emit("mic-status", {
-          roomId,
-          muted: micMuted,
-        });
-
+        
         setCameraOff(cameraOffStored);
-
+        
         stream.getTracks().forEach((track) => {
           peerConnection.current.addTrack(track, stream);
         });
-
+        
         console.log("Tracks added successfully");
         console.log("Local tracks:", stream.getTracks());
-
+        
         peerConnection.current.ontrack = (event) => {
           console.log("REMOTE TRACK RECEIVED");
           console.log(event);
           console.log(event.streams);
-
+          
           if (remoteVideoRef.current) {
             remoteVideoRef.current.srcObject = event.streams[0];
           }
         };
-
+        
         peerConnection.current.onicecandidate = (event) => {
           if (event.candidate) {
             socket.emit("ice-candidate", {
@@ -440,14 +436,24 @@ export default function Room() {
             });
           }
         };
-
+        
         // JOIN ONLY AFTER TRACKS EXIST
         // socket.emit("join-room", roomId);
+        
+        console.log("isMuted value: ",isMuted);
+        console.log("localstorage muted value: ", localStorage.getItem("micMuted"));
+        
         socket.emit("join-room", {
           roomId,
-          // name: sessionStorage.getItem("username"),// this ruined the mobile stuff
-          name: localStorage.getItem("username"),
+          name: sessionStorage.getItem("username"),
+          muted: localStorage.getItem("micMuted") ,
         });
+        // console.log("session storage muted value: ", sessionStorage.getItem("username"));
+        socket.emit("mic-status", {
+          roomId,
+          muted: micMuted,
+        });
+
 
         // socket.emit("join-room", {
         //   roomId,
@@ -529,7 +535,16 @@ export default function Room() {
     socket.on("participants", (users) => {
       console.log("Participants:", users);
 
+      const remoteuser = users.find((user) => {
+        return user.id !== socket.id;
+      });
+
+      if (remoteuser) {
+        setRemoteMuted(remoteuser.muted);
+      }
+
       setParticipants(users);
+      // console.log("These are the users: ",users)
     });
 
     socket.on("room-start-time", (time) => {
@@ -556,6 +571,13 @@ export default function Room() {
     socket.on("chat-history", (messages) => {
       setMessages(messages);
     });
+
+    // socket.emit("mic-status", {
+    //   roomId,
+    //   muted:isMuted,
+    // });
+
+    console.log("local user mic mute status:", isMuted);
 
     return () => {
       socket.off("offer");
@@ -592,19 +614,24 @@ export default function Room() {
     return () => clearInterval(interval);
   }, [startTime]);
 
+  // useEffect(()=>{
+  //    socket.emit("mic-status", {
+  //     roomId,
+  //     muted:isMuted,
+  //   });
+  // },[]);
+
   const hrs = String(Math.floor(seconds / 3600)).padStart(2, "0");
 
   const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
 
   const secs = String(seconds % 60).padStart(2, "0");
 
-  console.log("room.jsx is loaded");
+  // console.log("room.jsx is loaded");
 
   return (
     <div>
       <div className="bg-[#0D0D0D] text-neutral-50 flex flex-col w-full h-fit h-fit min-h-screen w-screen min-w-screen max-w-screen overflow-visible">
-       
-
         {/* <div className="flex justify-between items-center h-14 px-6"> */}
         <div className="flex flex-col md:flex-row justify-between items-center px-3 md:px-6 py-2 gap-2">
           {/* LEFT */}
@@ -672,12 +699,11 @@ export default function Room() {
             username={sessionStorage.getItem("username")}
           />
 
-
           <FloatingTools
-  setWhiteboardOpen={setWhiteboardOpen}
-  // showCodeEditor={showCodeEditor}
-          setShowCodeEditor={setShowCodeEditor}
-/>
+            setWhiteboardOpen={setWhiteboardOpen}
+            // showCodeEditor={showCodeEditor}
+            setShowCodeEditor={setShowCodeEditor}
+          />
 
           {sidebarOpen && (
             <Sidebar
@@ -708,30 +734,23 @@ export default function Room() {
           setActiveTab={setActiveTab}
           messages={messages}
           setWhiteboardOpen={setWhiteboardOpen}
-          
         ></Control>
 
+        {whiteboardOpen && (
+          <Whiteboard
+            roomId={roomId}
+            socket={socket}
+            onClose={() => setWhiteboardOpen(false)}
+          />
+        )}
 
-
-        {
-  whiteboardOpen && (
-    <Whiteboard
-      roomId={roomId}
-      socket={socket}
-      onClose={() => setWhiteboardOpen(false)}
-    />
-  )
-}
-
-
-
-{
-  showCodeEditor && (
-    <CodeEditor roomId={roomId}socket={socket}
-      onClose={() => setShowCodeEditor(false)}
-    />
-  )
-}
+        {showCodeEditor && (
+          <CodeEditor
+            roomId={roomId}
+            socket={socket}
+            onClose={() => setShowCodeEditor(false)}
+          />
+        )}
       </div>
     </div>
   );

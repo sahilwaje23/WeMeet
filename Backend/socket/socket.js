@@ -25,7 +25,7 @@ const socketHandler = (io) => {
 
     // join room
 
-    socket.on("join-room", async ({ roomId, name }) => {
+    socket.on("join-room", async ({ roomId, name,muted }) => {
       socket.data.name = name;
       //meeting timer
 
@@ -45,7 +45,7 @@ const socketHandler = (io) => {
       rooms[roomId].push({
         id: socket.id,
         name,
-        muted: false,
+        muted:muted,
         cameraOff: false,
       });
 
@@ -86,6 +86,8 @@ const socketHandler = (io) => {
 
       // send whiteboard updates to the new user or when he refreshes the page
       socket.emit("whiteboard-history", whiteboards[roomId] || []);
+
+      // socket.emit("mic-status",muted);
     });
 
     // offer
