@@ -446,13 +446,13 @@ export default function Room() {
         socket.emit("join-room", {
           roomId,
           name: sessionStorage.getItem("username"),
-          muted: localStorage.getItem("micMuted") ,
+          muted: localStorage.getItem("micMuted")==="true" ,
         });
         // console.log("session storage muted value: ", sessionStorage.getItem("username"));
-        socket.emit("mic-status", {
-          roomId,
-          muted: micMuted,
-        });
+        // socket.emit("mic-status", {
+        //   roomId,
+        //   muted: micMuted,
+        // });
 
 
         // socket.emit("join-room", {

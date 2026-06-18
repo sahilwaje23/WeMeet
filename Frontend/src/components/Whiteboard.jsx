@@ -64,8 +64,10 @@ export default function Whiteboard({ onClose, roomId }) {
     socket.emit("get-whiteboard-history", roomId);
 
     socket.on("whiteboard-history", (strokes) => {
-
-      console.log("we got the whiteboard history and strokes from backend bro , here we go: ", strokes);
+      console.log(
+        "we got the whiteboard history and strokes from backend bro , here we go: ",
+        strokes,
+      );
       console.log(strokes[0]);
 
       const canvas = canvasRef.current;
@@ -89,19 +91,17 @@ export default function Whiteboard({ onClose, roomId }) {
 
         ctx.stroke();
       });
-      
-
     });
 
     socket.on("clear-board", () => {
-  if (!canvasRef.current) return;
+      if (!canvasRef.current) return;
 
-  const canvas = canvasRef.current;
-  const ctx = canvas.getContext("2d");
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
 
-  ctx.fillStyle = "white";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-});
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    });
 
     return () => {
       socket.off("draw");
@@ -205,8 +205,8 @@ export default function Whiteboard({ onClose, roomId }) {
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // inform the server about the whiteboard status change 
-      socket.emit("clear-board", roomId);
+    // inform the server about the whiteboard status change
+    socket.emit("clear-board", roomId);
   };
 
   return (
@@ -369,6 +369,7 @@ export default function Whiteboard({ onClose, roomId }) {
             onPointerMove={draw}
             onPointerUp={stopDrawing}
             onPointerLeave={stopDrawing}
+            style={{ touchAction: "none" }}
             className="bg-white rounded-lg shadow-lg"
           />
         </div>
