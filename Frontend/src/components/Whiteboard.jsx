@@ -369,7 +369,8 @@ export default function Whiteboard({ onClose, roomId }) {
             onPointerMove={draw}
             onPointerUp={stopDrawing}
             onPointerLeave={stopDrawing}
-            style={{ touchAction: "none" }}
+            // style={{ touchAction: "none" }}
+            style={{ touchAction: isDrawing ? "none" : "auto" }}
             className="bg-white rounded-lg shadow-lg"
           />
         </div>

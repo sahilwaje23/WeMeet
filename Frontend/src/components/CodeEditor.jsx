@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 
+import { BACKEND_URL } from "../config";
+
 const defaultCppCode = `#include <bits/stdc++.h>
 
 using namespace std;
@@ -13,21 +15,10 @@ int main() {
 }`;
 
 const LANGUAGES = [
-  {
-    name: "C++",
-    value: "cpp",
-    judge0Id: 54,
-  },
-  {
-    name: "Python",
-    value: "python",
-    judge0Id: 71,
-  },
-  {
-    name: "JavaScript",
-    value: "javascript",
-    judge0Id: 63,
-  },
+  { name: "C++", value: "cpp" },
+  { name: "Python", value: "python" },
+  { name: "JavaScript", value: "javascript" },
+  { name: "Java", value: "java" },
 ];
 
 const DEFAULT_CODES = {
@@ -45,6 +36,12 @@ int main() {
   python: `print("Hello WeMeet")`,
 
   javascript: `console.log("Hello WeMeet");`,
+
+  java: `public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello WeMeet");
+    }
+}`,   
 };
 
 export default function CodeEditor({ onClose, socket, roomId }) {
@@ -53,59 +50,123 @@ export default function CodeEditor({ onClose, socket, roomId }) {
   const [code, setCode] = useState(DEFAULT_CODES.cpp);
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
+  const [isRunning, setIsRunning] = useState(false);
 
   //USEEFFECTS
   useEffect(() => {
-  socket.emit("get-code", roomId);
+    socket.emit("get-code", roomId);
 
-  socket.on("code-history", (data) => {
-    setLanguage(data.language);
+    socket.on("code-history", (data) => {
+      setLanguage(data.language);
 
-    if (data.code) {
+      if (data.code) {
+        setCode(data.code);
+      }
+    });
+
+    socket.on("code-change", (data) => {
       setCode(data.code);
-    }
-  });
+    });
 
-  socket.on("code-change", (data) => {
-    setCode(data.code);
-  });
+    socket.on("language-change", (data) => {
+      setLanguage(data.language);
+      setCode(data.code);
+    });
 
-  socket.on("language-change", (data) => {
-    setLanguage(data.language);
-    setCode(data.code);
-  });
-
-  return () => {
-    socket.off("code-history");
-    socket.off("code-change");
-    socket.off("language-change");
-  };
-}, []);
+    return () => {
+      socket.off("code-history");
+      socket.off("code-change");
+      socket.off("language-change");
+    };
+  }, []);
 
   //FUNCTIONS
-  const handleRun = async () => {
-    try {
-      setOutput("Running...");
+  // const handleRun = async () => {
+  //   try {
+  //     setOutput("Running...");
+  //     if (isRunning) return;
+  //     setIsRunning(true);
 
-      const response = await fetch("https://wemeet-backend-b4ct.onrender.com/api/code/run", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          language,
-          code,
-          input,
-        }),
+  //     const response = await fetch(
+  //       "https://wemeet-backend-b4ct.onrender.com/api/code/run",
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify({
+  //           language,
+  //           code,
+  //           input,
+  //         }),
+  //       },
+  //     );
+
+  //     // const data = await response.json();
+
+  //     // setOutput(data.output);
+
+  //     const data = await response.json();
+
+  //     console.log(data);
+
+  //     if (!response.ok || !data.success) {
+  //       setOutput(data.output || "Execution Failed");
+  //       return;
+  //     }
+
+  //     setOutput(data.output);
+  //     setIsRunning(false);
+  //   } catch (error) {
+  //     console.error(error);
+
+  //     setOutput("Execution Failed");
+  //   }
+  // };
+
+  const handleRun = async () => {
+    if (isRunning) return;
+
+    setIsRunning(true);
+    setOutput("Running...");
+
+    try {
+      console.log({
+        language,
+        code,
+        input,
       });
+      const response = await fetch(
+        "https://wemeet-backend-b4ct.onrender.com/api/code/run",
+        // `${BACKEND_URL}/api/code/run`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            language,
+            code,
+            input,
+          }),
+        },
+      );
 
       const data = await response.json();
+
+      console.log(data);
+
+      if (!response.ok || !data.success) {
+        setOutput(data.output || "Execution Failed");
+        return;
+      }
 
       setOutput(data.output);
     } catch (error) {
       console.error(error);
-
       setOutput("Execution Failed");
+    } finally {
+      setIsRunning(false);
     }
   };
 
@@ -113,40 +174,39 @@ export default function CodeEditor({ onClose, socket, roomId }) {
     console.log("Saving code...");
   };
 
-//   const handleLanguageChange = (e) => {
-//   const newLanguage = e.target.value;
+  //   const handleLanguageChange = (e) => {
+  //   const newLanguage = e.target.value;
 
-//   setLanguage(newLanguage);
+  //   setLanguage(newLanguage);
 
-//   setCode(DEFAULT_CODES[newLanguage]);
+  //   setCode(DEFAULT_CODES[newLanguage]);
 
-//   // socket.emit("language-change",{
-//   //   roomId,
-//   //   language:newLanguage,
-//   //   code:DEFAULT_CODES[newLanguage],
-//   // })
+  //   // socket.emit("language-change",{
+  //   //   roomId,
+  //   //   language:newLanguage,
+  //   //   code:DEFAULT_CODES[newLanguage],
+  //   // })
 
-//   socket.emit("code-change", {
-//   roomId,
-//   language,
-//   code: newCode,
-// });
+  //   socket.emit("code-change", {
+  //   roomId,
+  //   language,
+  //   code: newCode,
+  // });
 
- 
-// };
-const handleLanguageChange = (e) => {
-  const newLanguage = e.target.value;
+  // };
+  const handleLanguageChange = (e) => {
+    const newLanguage = e.target.value;
 
-  setLanguage(newLanguage);
+    setLanguage(newLanguage);
 
-  setCode(DEFAULT_CODES[newLanguage]);
+    setCode(DEFAULT_CODES[newLanguage]);
 
-  socket.emit("language-change", {
-    roomId,
-    language: newLanguage,
-    code: DEFAULT_CODES[newLanguage],
-  });
-};
+    socket.emit("language-change", {
+      roomId,
+      language: newLanguage,
+      code: DEFAULT_CODES[newLanguage],
+    });
+  };
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
       <div className="w-[95vw] md:w-[90vw] h-[90vh] md:h-[85vh] bg-[#111111] rounded-xl overflow-hidden flex flex-col">
@@ -167,11 +227,19 @@ const handleLanguageChange = (e) => {
               ))}
             </select>
 
-            <button
+            {/* <button
               onClick={handleRun}
               className="bg-green-500 text-black px-4 py-2 rounded font-semibold hover:bg-green-400"
             >
               Run
+            </button> */}
+
+            <button
+              disabled={isRunning}
+              onClick={handleRun}
+              className="bg-green-500 text-black px-4 py-2 rounded font-semibold hover:bg-green-400 disabled:opacity-50"
+            >
+              {isRunning ? "Running..." : "Run"}
             </button>
 
             <button
@@ -197,17 +265,17 @@ const handleLanguageChange = (e) => {
             language={language}
             theme="vs-dark"
             value={code}
-           onChange={(value) => {
-  const newCode = value || "";
+            onChange={(value) => {
+              const newCode = value || "";
 
-  setCode(newCode);
+              setCode(newCode);
 
-  socket.emit("code-change", {
-    roomId,
-    language,
-    code: newCode,
-  });
-}}
+              socket.emit("code-change", {
+                roomId,
+                language,
+                code: newCode,
+              });
+            }}
             options={{
               minimap: {
                 enabled: false,
