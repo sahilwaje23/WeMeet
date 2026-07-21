@@ -1,5 +1,4 @@
 // module imports
-
 import { useRef, useEffect, useState } from "react";
 
 //file imports
@@ -11,9 +10,23 @@ export default function Whiteboard({ onClose, roomId }) {
   const isDrawing = useRef(false);
   const [color, setColor] = useState("#000000");
   const [brushSize, setBrushSize] = useState(3);
-  const [isErasing, setIsErasing] = useState(false);
+
+  const [tool, setTool] = useState("pen"); // pen | eraser | pan
+
   const [eraserSize, setEraserSize] = useState(25);
   const lastPoint = useRef(null);
+
+  const containerRef = useRef(null);
+
+  // const isPanning = useRef(false);
+  const [isPanning, setIsPanning] = useState(false);
+
+  const panStart = useRef({
+    x: 0,
+    y: 0,
+    scrollLeft: 0,
+    scrollTop: 0,
+  });
   // useEffects
 
   useEffect(() => {
@@ -116,6 +129,22 @@ export default function Whiteboard({ onClose, roomId }) {
   // Functions
 
   const startDrawing = (e) => {
+    if (tool === "pan") {
+      // isPanning.current = true;
+      setIsPanning(true);
+
+      const container = containerRef.current;
+
+      panStart.current = {
+        x: e.clientX,
+        y: e.clientY,
+        scrollLeft: container.scrollLeft,
+        scrollTop: container.scrollTop,
+      };
+
+      return;
+    }
+
     isDrawing.current = true;
 
     lastPoint.current = {
@@ -131,6 +160,21 @@ export default function Whiteboard({ onClose, roomId }) {
   };
 
   const draw = (e) => {
+    if (tool === "pan") {
+      // if (!isPanning.current) return;
+      if (!isPanning) return;
+
+      const container = containerRef.current;
+
+      const dx = e.clientX - panStart.current.x;
+      const dy = e.clientY - panStart.current.y;
+
+      container.scrollLeft = panStart.current.scrollLeft - dx;
+      container.scrollTop = panStart.current.scrollTop - dy;
+
+      return;
+    }
+
     if (!isDrawing.current) return;
     if (!lastPoint.current) return;
 
@@ -145,7 +189,7 @@ export default function Whiteboard({ onClose, roomId }) {
 
     // ctx.strokeStyle = "black";
     // ctx.strokeStyle = color;
-    if (isErasing) {
+    if (tool === "eraser") {
       ctx.strokeStyle = "white";
       ctx.lineWidth = eraserSize;
     } else {
@@ -168,7 +212,7 @@ export default function Whiteboard({ onClose, roomId }) {
 
       color,
       brushSize,
-      isErasing,
+      isErasing: tool === "eraser",
     });
 
     lastPoint.current = {
@@ -178,9 +222,16 @@ export default function Whiteboard({ onClose, roomId }) {
   };
 
   const stopDrawing = () => {
+    if (tool === "pan") {
+      // isPanning.current = false;
+      setIsPanning(false);
+      return;
+    }
+
     isDrawing.current = false;
 
     const ctx = canvasRef.current.getContext("2d");
+
     ctx.beginPath();
 
     socket.emit("draw-end", { roomId });
@@ -218,11 +269,35 @@ export default function Whiteboard({ onClose, roomId }) {
           <span className="font-bold text-white">Whiteboard</span>
 
           <div className="flex gap-2">
+            <button
+              onClick={() => setTool("pen")}
+              className={`px-3 py-1 rounded text-xs font-semibold ${
+                tool === "pen"
+                  ? "bg-[#00D4FF] text-black"
+                  : "bg-[#111111] text-white"
+              }`}
+            >
+              ✏️ Pen
+            </button>
+
+            <button
+              onClick={() => setTool("pan")}
+              className={`px-3 py-1 rounded text-xs font-semibold ${
+                tool === "pan"
+                  ? "bg-[#00D4FF] text-black"
+                  : "bg-[#111111] text-white"
+              }`}
+            >
+              ✋ Pan
+            </button>
+
             {/*Eraser */}
             <button
-              onClick={() => setIsErasing(!isErasing)}
+              onClick={() => setTool("eraser")}
               className={`px-3 py-1 rounded text-xs font-semibold ${
-                isErasing ? "bg-red-500 text-white" : "bg-[#111111] text-white"
+                tool === "eraser"
+                  ? "bg-red-500 text-white"
+                  : "bg-[#111111] text-white"
               }`}
             >
               Eraser
@@ -360,7 +435,9 @@ export default function Whiteboard({ onClose, roomId }) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-4">
+        {/* <div className="flex-1 overflow-auto p-4"> */}
+
+        <div ref={containerRef} className="flex-1 overflow-auto p-4">
           <canvas
             ref={canvasRef}
             width={4000}
@@ -369,9 +446,21 @@ export default function Whiteboard({ onClose, roomId }) {
             onPointerMove={draw}
             onPointerUp={stopDrawing}
             onPointerLeave={stopDrawing}
+            onPointerCancel={stopDrawing}
             // style={{ touchAction: "none" }}
-            style={{ touchAction: isDrawing ? "none" : "auto" }}
-            className="bg-white rounded-lg shadow-lg"
+            style={{
+              touchAction: tool === "pan" ? "auto" : "none",
+            }}
+            // className="bg-white rounded-lg shadow-lg"
+            className={`bg-white rounded-lg shadow-lg ${
+              tool === "pan"
+                ? isPanning
+                  ? "cursor-grabbing"
+                  : "cursor-grab"
+                : tool === "eraser"
+                  ? "cursor-cell"
+                  : "cursor-crosshair"
+            }`}
           />
         </div>
       </div>
